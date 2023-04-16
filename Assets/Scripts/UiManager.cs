@@ -8,7 +8,6 @@ using UnityEngine.UI;
 public class UiManager : MonoBehaviour
 {
     public static UiManager Instance;
-    
     public TextMeshProUGUI score;
     public TextMeshProUGUI endFinalScore;
     private int _currentScore;
@@ -28,7 +27,7 @@ public class UiManager : MonoBehaviour
 
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         _currentScore = 0;
         UpdateScore(_currentScore);
@@ -42,8 +41,8 @@ public class UiManager : MonoBehaviour
 
     public void SetFinalScoreScreen()
     {
-        int highScore = PlayerPrefs.GetInt("highScore");
-        if (highScore != null)
+        var highScore = PlayerPrefs.GetInt("highScore", -1);
+        if (highScore != -1)
         {
             if (_currentScore > highScore)
             {

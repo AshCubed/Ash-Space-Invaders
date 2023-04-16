@@ -1,77 +1,76 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Playables;
-using UnityEngine.Timeline;
 
 public class PlayerController : MonoBehaviour
 {
-    public float moveBy;
-    public GameObject bullet;
-    public int bulletDmgAmnt;
-    public Transform bulletSpawnPoint;
-    public ParticleSystem deathEffect;
+    [Header("Movement")]
+    [SerializeField] private float _moveBy = 0.05f;
+    [SerializeField] private float _screenLeftMax, _screenRightMax;
+    [SerializeField] private InputActionReference _actionMovement;
+    [SerializeField] private InputActionReference _actionFireWeapon;
+    [Header("Gun")]
+    [SerializeField] private GameObject _bullet;
+    [SerializeField] private int _bulletDmgAmnt = 5;
+    [SerializeField] private Transform _bulletSpawnPoint;
+    [Header("Life")]
+    [SerializeField] private ParticleSystem _deathEffect;
+    [SerializeField] private int _lives = 3;
+    [SerializeField] private GameObject _playerShield;
+    [Header("Ui")]
+    [SerializeField] private Transform _livesImgParent;
+    [SerializeField] private GameObject _livesImg;
+    [SerializeField] private Transform _livesSpwnPnt;
+    [SerializeField] private PlayableDirector _gameOverDirector;
 
-    public int lives = 3;
-    public Transform livesImgParent;
-    public GameObject livesImg;
-    public Transform livesSpwnPnt;
+    private Vector2 _movementDirection;
     private List<GameObject> _livesImgs;
-    
     private Vector3 _startingPos;
-    public PlayableDirector gameOverDirector;
-    public GameObject playerShield;
-
     private bool _canPlayerMove;
+    public int BulletDamageAmount
+    {
+        get => _bulletDmgAmnt;
+        set => _bulletDmgAmnt = value;
+    }
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        _canPlayerMove = false;
+        _canPlayerMove = true;
         _startingPos = transform.position;
         _livesImgs = new List<GameObject>();
-        for (int i = 0; i < lives; i++)
+        for (int i = 0; i < _lives; i++)
         {
-            GameObject newGo = Instantiate(livesImg, new Vector2(livesSpwnPnt.transform.position.x + (100 * i),
-                livesSpwnPnt.transform.position.y), Quaternion.identity, livesImgParent);
+            GameObject newGo = Instantiate(_livesImg, new Vector2(_livesSpwnPnt.transform.position.x + (100 * i),
+                _livesSpwnPnt.transform.position.y), Quaternion.identity, _livesImgParent);
             _livesImgs.Add(newGo);
         }
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        Controls();
-    }
-
-    private void Controls()
+    private void Update()
     {
         if (_canPlayerMove)
         {
-            if (Input.GetKey(KeyCode.D) && transform.position.x < 7.5f)
+            if (_movementDirection.x >= 0.8f && transform.position.x < _screenRightMax)
             {
-                transform.position += new Vector3(moveBy, 0, 0);
+                transform.position += new Vector3(_moveBy, 0, 0);
             }
-            else if (Input.GetKey(KeyCode.A) && transform.position.x > -7.5f)
+            else if (_movementDirection.x <= -0.8f && transform.position.x > _screenLeftMax)
             {
-                transform.position += new Vector3(-moveBy, 0, 0);
-            }
-
-            if (Input.GetKeyDown(KeyCode.Mouse0))
-            {
-                FireBullet();
+                transform.position += new Vector3(-_moveBy, 0, 0);
             }
         }
+        
     }
 
     private void FireBullet()
     {
         AudioManager.instance.Play("ShipBullet");
-        GameObject newGo = Instantiate(bullet, bulletSpawnPoint.position, Quaternion.identity);
+        GameObject newGo = Instantiate(_bullet, _bulletSpawnPoint.position, Quaternion.identity);
         newGo.GetComponent<Rigidbody2D>().AddForce(Vector2.up * 40);
-        newGo.GetComponent<BulletLogic>().bulletDmgAmnt = bulletDmgAmnt;
+        newGo.GetComponent<BulletLogic>().bulletDmgAmnt = _bulletDmgAmnt;
     }
 
     private void OnCollisionEnter2D(Collision2D other)
@@ -85,7 +84,7 @@ public class PlayerController : MonoBehaviour
         if (other.gameObject.CompareTag("PowerUp-Shield"))
         {
             Destroy(other.gameObject);
-            Instantiate(playerShield, gameObject.transform.position, Quaternion.identity, gameObject.transform);
+            Instantiate(_playerShield, gameObject.transform.position, Quaternion.identity, gameObject.transform);
         }
 
         if (other.gameObject.CompareTag("PowerUp-GunDmgIncr"))
@@ -95,17 +94,17 @@ public class PlayerController : MonoBehaviour
     }
     
 
-    IEnumerator Death()
+    private IEnumerator Death()
     {
         GetComponent<Collider2D>().enabled = false;
         FindObjectOfType<InvaderGroupBrain>().CanInvadersFire(false);
         AudioManager.instance.Play("InvaderHit");
-        Instantiate(deathEffect.gameObject, transform.position, deathEffect.transform.rotation);
+        Instantiate(_deathEffect.gameObject, transform.position, _deathEffect.transform.rotation);
         _canPlayerMove = false;
-        this.GetComponent<SpriteRenderer>().enabled = false;
+        GetComponent<SpriteRenderer>().enabled = false;
         yield return new WaitForSeconds(0.5f);
-        lives--;
-        if (lives != 0)
+        _lives--;
+        if (_lives != 0)
         {
             GetComponent<Collider2D>().enabled = true;
             transform.position = _startingPos;
@@ -121,12 +120,48 @@ public class PlayerController : MonoBehaviour
             Destroy(_livesImgs[_livesImgs.Count-1]);
             yield return new WaitForSeconds(0.5f);
             UiManager.Instance.SetFinalScoreScreen();
-            gameOverDirector.Play();
+            _gameOverDirector.Play();
         }
     }
 
     public void CanPlayerMove(bool x)
     {
         _canPlayerMove = x;
+    }
+
+    private void OnEnable()
+    {
+        _actionMovement.action.Enable();
+        _actionFireWeapon.action.Enable();
+        _actionMovement.action.performed += ActionMovementOnPerformed;
+        _actionMovement.action.canceled += ActionMovementOnCanceled;
+        _actionFireWeapon.action.started += ActionFireWeaponOnStarted;
+    }
+
+    private void ActionMovementOnCanceled(InputAction.CallbackContext obj)
+    {
+        _movementDirection = Vector2.zero;
+    }
+
+    private void ActionFireWeaponOnStarted(InputAction.CallbackContext obj)
+    {
+        FireBullet();
+    }
+
+    private void ActionMovementOnPerformed(InputAction.CallbackContext obj)
+    {
+        if (_canPlayerMove)
+        {
+            _movementDirection = new Vector2(obj.ReadValue<Vector2>().x, 0f);
+        }
+    }
+
+    private void OnDisable()
+    {
+        _actionMovement.action.Disable();
+        _actionFireWeapon.action.Disable();
+        _actionMovement.action.performed -= ActionMovementOnPerformed;
+        _actionMovement.action.canceled -= ActionMovementOnCanceled;
+        _actionFireWeapon.action.started -= ActionFireWeaponOnStarted;
     }
 }

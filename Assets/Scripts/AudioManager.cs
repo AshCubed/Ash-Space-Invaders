@@ -14,6 +14,7 @@ public class AudioManager : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
+        transform.parent = null;
         if (instance == null)
         {
             instance = this;

@@ -37,8 +37,8 @@ public class GunDamagePowerUp : PowerUpBase
         GetComponent<CircleCollider2D>().enabled = false;
         GetComponent<Rigidbody2D>().simulated = false;
         _playerController = FindObjectOfType<PlayerController>();
-        oldPlayerGunDamageAmnt = _playerController.bulletDmgAmnt;
-        _playerController.bulletDmgAmnt = newPlayerGunDamageAmnt;
+        oldPlayerGunDamageAmnt = _playerController.BulletDamageAmount;
+        _playerController.BulletDamageAmount = newPlayerGunDamageAmnt;
     }
 
     // Update is called once per frame
@@ -49,7 +49,7 @@ public class GunDamagePowerUp : PowerUpBase
     
     public override void EndPowerUp()
     {
-        _playerController.bulletDmgAmnt = oldPlayerGunDamageAmnt;
+        _playerController.BulletDamageAmount = oldPlayerGunDamageAmnt;
         Destroy(gameObject);
     }
 }
