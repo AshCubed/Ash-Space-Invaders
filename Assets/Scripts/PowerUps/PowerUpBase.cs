@@ -1,38 +1,36 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PowerUpBase : MonoBehaviour
 {
-    public int activeTime;
-    public float startTime;
-    public float endTime;
-    public bool endPowerUp;
+    [SerializeField] private float _activeTime;
+    private float _currentTime;
+    private bool _isActive;
     
     // Start is called before the first frame update
-    void Start()
+    protected virtual void Start()
     {
-        startTime = Time.fixedTime;
-        endTime = Time.fixedTime + activeTime;
-        endPowerUp = false;
+        _isActive = true;
+        _currentTime = 0f;
     }
 
     // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
+        if (!_isActive) return;
         PowerUpTimerCheck();
     }
 
-    public virtual void PowerUpTimerCheck()
+    private void PowerUpTimerCheck()
     {
-        if (Time.fixedTime >= endTime && !endPowerUp)
+        _currentTime += Time.deltaTime;
+        if (_currentTime >= _activeTime)
         {
             EndPowerUp();
-            endPowerUp = true;
+            _isActive = false;
         }
     }
 
-    public virtual void EndPowerUp()
+    protected virtual void EndPowerUp()
     {
         
     }

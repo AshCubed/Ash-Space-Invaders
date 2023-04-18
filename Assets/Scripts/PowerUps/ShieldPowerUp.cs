@@ -1,28 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ShieldPowerUp : PowerUpBase
 {
-    public Animator shiledAnimator;
-    
-    // Start is called before the first frame update
-    void Start()
-    {
-        startTime = Time.fixedTime;
-        endTime = Time.fixedTime + activeTime;
-        endPowerUp = false;
-    }
+    [SerializeField] private Animator _shieldAnimator;
 
-    // Update is called once per frame
-    void Update()
+    protected override void EndPowerUp()
     {
-        base.PowerUpTimerCheck();
-    }
-
-    public override void EndPowerUp()
-    {
-        shiledAnimator.SetTrigger("EndShield");
+        _shieldAnimator.SetTrigger("EndShield");
     }
 
     public void DestroyGameObject()

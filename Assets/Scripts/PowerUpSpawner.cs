@@ -1,32 +1,42 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PowerUpSpawner : MonoBehaviour
 {
-    public int timeBetweenPowerUps;
-    public List<GameObject> powerUps;
-    public List<Transform> powerUpSpawnLocations;
-    public GameObject powerUpParent;
+    [SerializeField] private int _timeBetweenPowerUps;
+    [SerializeField] private List<GameObject> _powerUps;
+    [SerializeField] private GameObject _powerUpParent;
+    private List<Transform> _powerUpSpawnLocations;
+    private float _currentTime;
+    private bool _canSpawn;
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        StartCoroutine(SpawnPowerUps());
+        _canSpawn = true;
+        _powerUpSpawnLocations = new List<Transform>();
+        foreach (var child in _powerUpParent.transform.GetComponentsInChildren<Transform>()) 
+            _powerUpSpawnLocations.Add(child);
+        _powerUpSpawnLocations.Remove(_powerUpSpawnLocations[0]);
+        _currentTime = _timeBetweenPowerUps;
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        
-    }
-
-    IEnumerator SpawnPowerUps()
-    {
-        yield return new WaitForSeconds(timeBetweenPowerUps);
-        Instantiate(powerUps[Random.Range(0, powerUps.Count - 1)],
-            powerUpSpawnLocations[Random.Range(0, powerUpSpawnLocations.Count - 1)].position, 
-            Quaternion.identity, powerUpParent.transform);
-        StartCoroutine(SpawnPowerUps());
+        if (_canSpawn)
+        {
+            if (_currentTime > 0)
+            {
+                _currentTime -= 0.01f;
+                if (_currentTime <= 0)
+                {
+                    Instantiate(_powerUps[Random.Range(0, _powerUps.Count)],
+                        _powerUpSpawnLocations[Random.Range(0, _powerUpSpawnLocations.Count)].position, 
+                        Quaternion.identity, _powerUpParent.transform);
+                    _currentTime = _timeBetweenPowerUps;
+                }
+            }
+        }
     }
 }

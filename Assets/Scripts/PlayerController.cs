@@ -29,6 +29,7 @@ public class PlayerController : MonoBehaviour
     private List<GameObject> _livesImgs;
     private Vector3 _startingPos;
     private bool _canPlayerMove;
+    
     public int BulletDamageAmount
     {
         get => _bulletDmgAmnt;
@@ -89,6 +90,7 @@ public class PlayerController : MonoBehaviour
 
         if (other.gameObject.CompareTag("PowerUp-GunDmgIncr"))
         {
+            //Destroy(other.gameObject);
             other.gameObject.GetComponent<GunDamagePowerUp>().enabled = true;
         }
     }
